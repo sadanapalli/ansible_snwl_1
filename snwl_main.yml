@@ -1,0 +1,11 @@
+---
+# This playbook creates a service account for Ansible on target servers
+# This plabook installs the required packages on the target servers
+
+- hosts: "{{ hostgrp | default('test') }}"
+  serial: 1
+  gather_facts: yes
+
+  roles:
+    - { role: createuser,  tags: createuser }
+    - { role: installpkg,  tags: installpkg }

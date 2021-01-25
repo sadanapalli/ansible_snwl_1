@@ -1,0 +1,38 @@
+---
+- name: Create user account on target server
+  user:
+    name: "{{ snwl_name }}"
+    home: "{{ snwl_home }}"
+    shell: "{{ snwl_shell }}"
+    comment: "{{ snwl_comment }}"
+    group: "{{ snwl_group_ubuntu if ansible_distribution == 'Ubuntu' else snwl_group_rhel }}"
+    uid: "{{ snwl_uid }}"
+    password: "{{ snwl_password }}"
+    create_home: "{{ snwl_create_home }}"
+    state: "{{ snwl_state }}"
+    remove: "{{ snwl_remove }}"
+
+- name: Create .ssh under user's home directory
+  file:
+    path: "{{ snwl_home }}/.ssh" 
+    state: directory
+    mode: '0700'
+    owner: "{{ snwl_name }}"
+    group: "{{ snwl_group_ubuntu if ansible_distribution == 'Ubuntu' else snwl_group_rhel }}"
+
+- name: Create authorized_keys file for the user
+  copy:
+    src: authorized_keys
+    dest: "{{ snwl_home }}/.ssh/authorized_keys"
+    owner: "{{ snwl_name }}"
+    group: "{{ snwl_group_ubuntu if ansible_distribution == 'Ubuntu' else snwl_group_rhel }}"
+    mode: '0400'
+
+- name: Create sudoers file for the user
+  copy:
+    src: 99-ansible-user
+    dest: "/etc/sudoers.d/99-ansible-user"
+    owner: root
+    group: root
+    mode: '0440'
+

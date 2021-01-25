@@ -1,0 +1,2 @@
+# User rules for ansible user
+ansible ALL=(ALL) NOPASSWD:ALL
