@@ -1,0 +1,10 @@
+---
+
+- name: Import the FE Agent config file on target node
+  command: /opt/fireeye/bin/xagt -i /tmp/agent_config.json
+
+- name: Start the FE Agent service on target node
+  service:
+    name: xagt
+    state: started
+    enabled: yes

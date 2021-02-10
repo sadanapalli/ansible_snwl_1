@@ -1,0 +1,77 @@
+---
+
+- name: Copy FE Agent file for Ubuntu (14 or older) to target node
+  copy:
+    src: xagt_32.30.12-1.ubuntu12_amd64.deb
+    dest: /tmp/xagt_32.30.12-1.ubuntu12_amd64.deb
+  when: ansible_os_family == "Debian" and ansible_distribution_major_version|int <= 14
+
+- name: Copy FE Agent file for Ubuntu (16 or later) to target node
+  copy:
+    src: xagt_32.30.12-1.ubuntu16_amd64.deb
+    dest: /tmp/xagt_32.30.12-1.ubuntu16_amd64.deb
+  when: ansible_os_family == "Debian" and ansible_distribution_major_version|int >= 16
+
+- name: Copy FE Agent file for RedHat family (6) to target node
+  copy:
+    src: xagt-32.30.12-1.el6.x86_64.rpm
+    dest: /tmp/xagt-32.30.12-1.el6.x86_64.rpm
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int == 6
+
+- name: Copy FE Agent file for RedHat family (7 or later) to target node
+  copy:
+    src: xagt-32.30.12-1.el7.x86_64.rpm
+    dest: /tmp/xagt-32.30.12-1.el7.x86_64.rpm
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7
+
+- name: Copy agent config json file to target node
+  copy:
+    src: agent_config.json
+    dest: /tmp/agent_config.json
+
+
+- name: Check if the FE Agent package already exists - Debian family
+  shell:
+    cmd:  dpkg-query -s xagt 2>/dev/null | grep -q "install ok installed"
+  ignore_errors: True
+  register: xagt_check_ubuntu
+  when: ansible_os_family == "Debian"
+  changed_when: no
+  no_log: True
+
+- name: Install the FE Agent on Ubuntu (14 or older) to target node
+  command: dpkg -i /tmp/xagt_32.30.12-1.ubuntu12_amd64.deb
+  when: ansible_os_family == "Debian" and ansible_distribution_major_version|int <= 14 and xagt_check_ubuntu.rc != 0
+  notify:
+  - Import the FE Agent config file on target node
+  - Start the FE Agent service on target node
+
+- name: Install the FE Agent on Ubuntu (16 or later) to target node
+  command: dpkg -i /tmp/xagt_32.30.12-1.ubuntu16_amd64.deb
+  when: ansible_os_family == "Debian" and ansible_distribution_major_version|int >= 16 and xagt_check_ubuntu.rc != 0
+  notify:
+  - Import the FE Agent config file on target node
+  - Start the FE Agent service on target node
+
+- name: Check if the FE Agent package already exists - RedHat family
+  shell:
+    cmd: rpm -q xagt
+  ignore_errors: True
+  register: xagt_check
+  when: ansible_os_family == "RedHat"
+  changed_when: no
+  no_log: True
+
+- name: Install FE Agent on RedHat family (6) to target node
+  command: rpm -ivh /tmp/xagt-32.30.12-1.el6.x86_64.rpm
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int == 6 and xagt_check.rc != 0
+  notify:
+  - Import the FE Agent config file on target node
+  - Start the FE Agent service on target node
+
+- name: Install FE Agent on RedHat family (7 or later) to target node
+  command: rpm -ivh /tmp/xagt-32.30.12-1.el7.x86_64.rpm
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7 and xagt_check.rc != 0
+  notify:
+  - Import the FE Agent config file on target node
+  - Start the FE Agent service on target node

@@ -1,0 +1,11 @@
+snwl_name: swansible
+snwl_home: /home/swansible
+snwl_shell: /bin/bash
+snwl_comment: Service acount for Ansible
+snwl_group_rhel: wheel
+snwl_group_ubuntu: admin
+snwl_create_home: yes
+snwl_state: present
+snwl_uid: 1900
+snwl_remove: no
+snwl_password: $6$NU.AvUDYrX0XGf45$YH01cDMmcAXBH1n.uE1YItuH30DsvkwKZKozEebdmhM/8gNhxFRkpoYRNSNDbvNplxpt9hot5cudE0uO.wRRk.

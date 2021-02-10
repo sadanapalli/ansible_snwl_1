@@ -1,0 +1,4 @@
+# Nmap 7.70 scan initiated Thu Jan 28 23:01:09 2021 as: nmap -O --osscan-limit -n -oG nmap_output 172.31.13.0/24
+Host: 172.31.13.133 ()	Status: Up
+Host: 172.31.13.133 ()	Ports: 22/open/tcp//ssh///	Ignored State: closed (999)	OS: Linux 3.7 - 3.10	Seq Index: 259	IP ID Seq: All zeros
+# Nmap done at Thu Jan 28 23:01:23 2021 -- 256 IP addresses (1 host up) scanned in 14.34 seconds

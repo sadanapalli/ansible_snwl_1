@@ -1,0 +1,52 @@
+---
+# This playbook generates a report on FE Agent on target servers
+# in the inventory file
+
+- hosts: "{{ hostgrp }}"
+  serial: 1
+  gather_facts: yes
+  ignore_unreachable: yes
+  ignore_errors: true
+
+  tasks:
+  - name: Check Ansible Service Account
+    shell: |
+      id -u swansible > /dev/null
+      if [ $? -eq 0 ]; then echo YES; else echo NO; fi
+    register: check_id
+
+  - name: Check FireEye Agent Package - RedHat Family
+    shell: |
+      rpm -q xagt > /dev/null
+      if [ $? -eq 0 ]; then echo YES; else echo NO; fi
+    register: check_pkg_r
+    when: ansible_os_family == "RedHat"
+
+  - name: Check FireEye Agent Package - Debian Family
+    shell: |
+      apt show xagt > /dev/null
+      if [ $? -eq 0 ]; then echo YES; else echo NO; fi
+    register: check_pkg_u
+    when: ansible_os_family == "Debian"
+
+  - name: Check FireEye Agent Service Status
+    shell: |
+      rc=$(service xagt status | grep Active |wc -l)
+      if [ $rc -eq 0 ]; then
+        service xagt status | awk '{print $NF}'
+      else
+        service xagt status | grep Active | awk '{print $2,"",$3}'
+      fi
+    register: check_svc
+
+  - name: Write to fireeye agent info file - RedHat
+    shell: |
+      echo "{{inventory_hostname}}, {{ansible_distribution}}, {{ansible_distribution_version}}, {{check_id.stdout}}, {{check_pkg_r.stdout}}, {{check_svc.stdout}}" >> /tmp/fireeye_agent_info.csv
+    delegate_to: localhost
+    when: ansible_os_family == "RedHat"
+
+  - name: Write to fireeye agent info file - Ubuntu
+    shell: |
+      echo "{{inventory_hostname}}, {{ansible_distribution}}, {{ansible_distribution_version}}, {{check_id.stdout}}, {{check_pkg_u.stdout}}, {{check_svc.stdout}}" >> /tmp/fireeye_agent_info.csv
+    delegate_to: localhost
+    when: ansible_os_family == "Debian"

@@ -1,0 +1,3 @@
+snwl_name: ansible
+snwl_state: absent
+snwl_remove: yes

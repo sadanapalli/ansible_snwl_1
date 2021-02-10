@@ -1,0 +1,99 @@
+#!/bin/bash
+
+
+## VARIABLES
+
+snwl_option=
+snwl_init_user=test1
+snwl_main_user=swansible
+snwl_subnet=
+snwl_network=
+
+
+## FUNCTIONS
+
+## Usage info
+##
+usage() {
+    echo "Run the main ansible playbook to create/delete ansible user or install/configure FE agent"
+    echo
+    echo "Usage: run_ansible_playbook.sh -o <option> -s <subnet> [-h]"
+    echo "       -o <option>  Tell which task to run (create/delete/install)"
+    echo "       -s <subnet>  Subnet CIDR"
+    echo "       -h           Display the usage info"
+}
+
+run_ansible_playbook() {
+	if [ ! -f ~/.ssh/id_rsa.pub ]; then
+		echo "SSH Public Key file ~/.ssh/id_rsa.pub does not exist, please create. Exiting."
+	else
+		cat ~/.ssh/id_rsa.pub > roles/create_ansible_user/files/authorized_keys
+	fi
+
+	if [ "$snwl_option" == "create" ]; then
+		echo "Proceeding to create ansible service account..."
+		echo
+		ansible-playbook snwl_main.yml --tags create_ansible_user -u $snwl_init_user -k -e "hostgrp=$snwl_network"
+	elif [ "$snwl_option" == "delete" ]; then
+		echo "Proceeding to delete the ansible service user account..."
+		echo
+		ansible-playbook snwl_main.yml --tags delete_ansible_user -u $snwl_init_user -k -e "hostgrp=$snwl_network"
+	elif [ "$snwl_option" == "install" ]; then
+		echo "Proceeding to install and configure FireEye Agent..."
+		ansible-playbook snwl_main.yml --tags install_fe_agent -u $snwl_main_user -e "hostgrp=$snwl_network"
+	fi
+}
+
+
+## Read the arguments passed
+##
+while getopts "ho:s:" OPTS
+do
+        case $OPTS in
+        h)      usage
+                exit 1
+                ;;
+        o)      snwl_option=$OPTARG;;
+        s)      snwl_subnet=$OPTARG;;
+        \?)     usage
+                exit 1
+                ;;
+        esac
+done
+shift $((OPTIND -1))
+
+
+## MAIN
+##
+
+snwl_network=${snwl_subnet%/*}
+
+[[ -z "$snwl_option" ]] && { echo "No value provided for option, exiting."; exit 1; }
+[[ -z "$snwl_subnet" ]] && { echo "No value provided for subnet, exiting."; exit 1; }
+
+echo
+echo "****** READ and CONFIRM *******"
+echo
+echo "This script should be used to perform one of the below actions.
+  1. <create>  Create ansible service account (required)
+  2. <install> Install FireEye Agent and configure (required)
+  3. <delete>  Delete ansible service account (DO NOT USE unless needed)
+
+  NOTE: The inventory file used for hosts is: inventory/hosts
+"
+echo
+
+echo "The selected option is: $snwl_option, The selected subnet is: $snwl_subnet"
+if [ $snwl_option == "create" -o $snwl_option == "delete" ]; then
+	echo "You need to enter the password for root user on target nodes when prompted"
+fi
+
+echo
+read -p "Do you want to proceed? " -n 1 -r
+echo    # (optional) move to a new line
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    exit 1
+fi
+
+run_ansible_playbook
